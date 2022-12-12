@@ -24,7 +24,7 @@ class Chroma:
         self.cellCurrent_500mA = 1 # set the cell current range 500mA
         self.cellCurrent_auto  = 0 # set the cell current with some reasonable value 
         
-        self.vCell = 4.0 # this is the initial voltage of the cells 
+        self.vCell = 0.0 # this is the initial voltage of the cells 
         
         self.visaSetAttributes()
         
@@ -70,7 +70,7 @@ class Chroma:
         self.chroma.write(f'SIM:CONF:CELL:PARA {self.noOfBMS},{self.noOfBMS},{self.noOfBMStestingCells},{self.paralleBMSchannel},{self.cellCurrent_5A}\n') #BMS 1, Cell Start 1, Cell end 2, # Cell paralle to the channel1 , # Current Range 2  - 5.0 A
         
         # program the cells individually for the first time 
-        for i in range(self.noOfBMStestingCells +1):
+        for i in range(1, self.noOfBMStestingCells +1):
             self.batteryEmulatorVoltageSet(cellNo=i,cellVoltage=self.vCell)
             
         ### check if there is any error in the Chroma while setting the voltages 
@@ -83,9 +83,10 @@ class Chroma:
     
     #this method can set the chroma each cell voltages and enables the channel immediately
     def batteryEmulatorVoltageSet(self,cellNo,cellVoltage):
-        self.chroma.write(f'SIM:PROG:CELL {self.noOfBMS},{self.noOfBMS},{cellNo},{cellNo},{cellVoltage},{self.cellCurrent_5A}\n') # BMS start  1 ,# BMS end 1 ,#set the start cell 1, # set the end cell 1, # set the cell voltage 4.0 , # set the Current of the cell 0.5A 
+        print(f'Chroma Cell No {cellNo} -> Voltage {cellVoltage}')
+        self.chroma.write(f'SIM:PROG:CELL {self.noOfBMS},{self.noOfBMS},{cellNo},{cellNo},{cellVoltage},5\n') # BMS start  1 ,# BMS end 1 ,#set the start cell 1, # set the end cell 1, # set the cell voltage 4.0 , # set the Current of the cell 0.5A 
         self.chroma.write('SIM:OUTP:IMM\n') # Switch on all the cells immediately
-     
+        
      # Battery emulator testing method to capture the Voltage , current and protection     
     def measureBatteryEmulatorParameters(self):
             for i in range(1,5):
@@ -98,11 +99,13 @@ class Chroma:
     # query all cell voltage of the BMS #1        
     @property
     def BateryEmulatorCellVoltages(self):
-        return [float(volt.strip()) for volt in  self.chroma.query('SIM:MEAS:BMS:VOLT? 1\n').split(',')]
+        return list(reversed([float(volt.strip()) for volt in  self.chroma.query('SIM:MEAS:BMS:VOLT? 1\n').split(',')]))
+        # return [float(volt.strip()) for volt in  self.chroma.query('SIM:MEAS:BMS:VOLT? 1\n').split(',')]
     # query all cell Current of the BMS #1   
     @property
     def BateryEmulatorCellCurrent(self):
-        return [float(curr.strip()) for curr in self.chroma.query('SIM:MEAS:BMS:CURR? 1\n').split(',')]
+        return list(reversed([float(curr.strip()) for curr in self.chroma.query('SIM:MEAS:BMS:CURR? 1\n').split(',')]))
+        # return [float(curr.strip()) for curr in self.chroma.query('SIM:MEAS:BMS:CURR? 1\n').split(',')]
     
     # query all cell Protection of the BMS #1   
     @property
@@ -119,3 +122,9 @@ class Chroma:
 if __name__ == '__main__':
     chroma = Chroma()
     chroma.measureBatteryEmulatorParameters()
+    print(chroma.BateryEmulatorCellVoltages)
+    voltage=3.6
+    # for i in range(1,1000):
+    #     chroma.batteryEmulatorVoltageSet(8,voltage)
+    #     voltage=voltage+0.01
+    #     time.sleep(0.1)

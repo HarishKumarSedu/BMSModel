@@ -1,5 +1,5 @@
 import numpy as np
-from BatteryParameters import BatteryParameters
+from BatteryParameters_TTC import BatteryParameters
 
 class BatteryModel:
     
@@ -9,21 +9,27 @@ class BatteryModel:
         self.SOC        = SOC0
         self.BatTable   = BatteryParameters()
         self.ibatt      = 0.0
-        self._VOTC      = 0.0
+        self._VTTC1      = 0.0
+        self._VTTC2      = 0.0
         self.RO         = 0.0
        
     def battVoltage(self,ibatt):
         self.RO    = self.BatTable.ROCH(self.SOC)
         self.VOC   = self.BatTable.VOC(self.SOC)
-        self.Vbatt = self.VOC - self.VOTC - self.RO*self.ibatt
+        self.Vbatt = self.VOC - self.VTTC1ch - self.VTTC2ch - self.RO*self.ibatt
         self.ibatt = ibatt
         return [self.Vbatt,self.VOC]
         
   
     @property
-    def VOTC(self)->float:
-        self._VOTC = self._VOTC * np.exp(-self.dt /(self.BatTable.COTC(self.SOC) * self.BatTable.ROTC(self.SOC) )) +  self.BatTable.ROTC(self.SOC) * ( 1 - np.exp(-self.dt /(self.BatTable.COTC(self.SOC) * self.BatTable.ROTC(self.SOC) ))) * self.ibatt
-        return self._VOTC
+    def VTTC1ch(self)->float:
+        self._VTTC1 = self._VTTC1 * np.exp(-self.dt /(self.BatTable.CTTC1ch(self.SOC) * self.BatTable.RTTC1ch(self.SOC) )) +  self.BatTable.RTTC1ch(self.SOC) * ( 1 - np.exp(-self.dt /(self.BatTable.CTTC1ch(self.SOC) * self.BatTable.RTTC1ch(self.SOC) ))) * self.ibatt
+        return self._VTTC1
+    
+    @property
+    def VTTC2ch(self)->float:
+        self._VTTC2 = self._VTTC2 * np.exp(-self.dt /(self.BatTable.CTTC2ch(self.SOC) * self.BatTable.RTTC2ch(self.SOC) )) +  self.BatTable.RTTC2ch(self.SOC) * ( 1 - np.exp(-self.dt /(self.BatTable.CTTC2ch(self.SOC) * self.BatTable.RTTC2ch(self.SOC) ))) * self.ibatt
+        return self._VTTC2
     
     @property
     def CoulombSOC(self):
